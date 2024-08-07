@@ -1,19 +1,19 @@
 'use client'
 import Image from "next/image";
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import { useState } from 'react';
-import { Box, Button, Stack, sendMessage, TextField, Typography } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, Button, Stack, sendMessage, Switch, TextField, Typography } from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-/*
-function WebsiteTheme() {
-  const [darkMode, setDarkMode] = useState(useMediaQuery('(prefers-color-scheme: dark)'))
 
-  const theme = React.useMemo(
-    () =>
-      createTheme({
+export default function Home() {
+  /* ----- SET LIGHT/DARK MODE ----- */
+  const [darkMode, setDarkMode] = useState(useMediaQuery('(prefers-color-scheme: dark)'));
+
+  const theme = React.useMemo (() =>
+      createTheme ({
         palette: {
           mode: darkMode ? 'dark' : 'light',
         },
@@ -24,22 +24,9 @@ function WebsiteTheme() {
   const handleToggleDarkMode = () => {
     setDarkMode(!darkMode);
   }
+  /* ----- END | SET LIGHT/DARK MODE ----- */
 
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ position: 'absolute', top: 10, right: 10 }}>
-        <Button onClick={handleToggleDarkMode}>
-          {darkMode ? 'Light Mode' : 'Dark Mode'}
-        </Button>
-      </Box>
-      <Home />
-    </ThemeProvider>
-  );
-}
-*/
 
-export default function Home() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -47,126 +34,144 @@ export default function Home() {
     }
   ]);
 
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState('');
 
   const sendMessage = async () => {
+    
     setMessages((messages) => [
       ...messages,
       { role: "user", content: message },
       { role: "assistant", content: '' }
     ]);
 
-    setMessage('')
+    setMessage('');
 
-    const response = await fetch('/api/ai-customer-support', {
+    const response = await fetch('/api/customer', {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify([...messages, { role: 'user', content: message }])
-    })
+    });
 
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
 
-    let result = ''
+    let result = '';
     reader.read().then(function processText({ done, value }) {
       if (done) {
-        return result
+        return result;
       }
-      const text = decoder.decode(value || new IntBArray(), { stream: true })
+      const text = decoder.decode(value || new IntBArray(), { stream: true });
       setMessages((messages) => {
-        let lastMessage = messages[messages.length - 1]
-        let otherMessages = messages.slice(0, messages.length - 1)
+        let lastMessage = messages[messages.length - 1];
+        let otherMessages = messages.slice(0, messages.length - 1);
         return [
           ...otherMessages,
           {
             ...lastMessage,
             content: lastMessage.content + text
           }
-        ]
-      })
-      return reader.read().then(processText); // recursion
-    })
-  }
-  
-return (
-    <Box pwidth="100vw" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center" overflow="hidden">
-      <Stack
-        position="absolute"
-        top="50%"
-        left="50%"
-        sx={{ 
-          transform: 'translate(-50%, -50%)' 
-        }}
-        direction="column"
-        width="100%"
-        height="100%"
-        spacing={3}
-      >
-        {/* --- CHAT HEADER --- */}
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          fullWidth
-          borderBottom="3px solid black"
-          bgcolor="blue"
-        >
-          <Typography variant="h3">AI Chat Bot</Typography>
-        </Box>
+        ];
+      });
+      return reader.read().then(processText); 
+    });
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box pwidth="100vw" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center" overflow="hidden">
+        
+        {/* ----- MAIN CONTAINER ----- */}
         <Stack
-          direction="column"
-          spacing={2}
-          flexGrow={1}
-          overflow="auto"
-          maxHeight="100%"
-        >
-          {
-            messages.map((message, index) => (
-              <Box key={index} display='flex' justifyContent={
-                message.role === 'assistant' ? 'flex-start' : 'flex-end'
-              }>
-                <Box
-                  bgcolor={
-                    message.role === 'assistant' ? 'primary.main' : 'secondary.main'
-                  }
-                  color="white"
-                  borderRadius={16}
-                  padding={2}
-                >
-                  {message.content}
-                </Box>
-              </Box>
-            ))}
-        </Stack>
-        <Stack
-          direction="row"
-          spacing={2}
+          position="absolute"
+          top="50%"
+          left="50%"
           sx={{
-            padding: '0px 15px 10px 15px',
+            transform: 'translate(-50%, -50%)'
           }}
+          direction="column"
+          width="100%"
+          height="100%"
+          spacing={3}
         >
-          <TextField
-            label="Enter your message..."
-            value={ message }
-            onChange = {(e) => setMessage(e.target.value)}
+
+          {/* ----- CHAT HEADER ----- */}
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
             fullWidth
-            InputProps={{
-              style: {
-                borderRadius: "30px",
-              }
-            }}
-          />
-          <Button
-            variant="contained"
-            onClick={ sendMessage }
+            borderBottom="3px solid black"
+            bgcolor="blue"
+          >
+            <Typography variant="h3">AI Chat Bot</Typography>
+            <Button onClick={handleToggleDarkMode}>
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </Button>
+          </Box>
+
+
+          {/* ----- MESSAGE DISPLAY CONTAINER ----- */}
+          <Stack
+            direction='column'
+            spacing={2}
+            flexGrow={1}
+            overflow='auto'
+            maxHeight='100%'
+          >
+            {
+              messages.map((message, index) => (
+                <Box 
+                  key={index} 
+                  display='flex' 
+                  justifyContent={message.role === 'assistant' ? 'flex-start' : 'flex-end'}
+                >
+                  <Box
+                    bgcolor={
+                      message.role === 'assistant' ? 'primary.main' : 'secondary.main'
+                    }
+                    color="white"
+                    borderRadius={16}
+                    padding={2}
+                  >
+                    {message.content}
+                  </Box>
+                </Box>
+              ))}
+          </Stack>
+
+          {/* ----- MESSAGE INPUT CONTAINER ------*/}
+          <Stack
+            direction="row"
+            spacing={2}
             sx={{
-              borderRadius: "50%",
+              padding: '0px 15px 10px 15px',
             }}
-          ><ArrowUpwardRoundedIcon /></Button>
-        </Stack>
-      </Stack>
-    </Box>
-  )
+          >
+            <TextField
+              label="Enter your message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              fullWidth
+              InputProps={{
+                style: {
+                  borderRadius: "30px",
+                }
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={sendMessage}
+              sx={{
+                borderRadius: "50%",
+              }}
+            ><ArrowUpwardRoundedIcon /></Button>
+
+          </Stack> {/* ----- END | MESSAGE INPUT CONTAINER ----- */}
+        </Stack> {/* ----- END | MAIN CONTAINER ----- */}
+      </Box>
+    </ThemeProvider>
+  );
 }

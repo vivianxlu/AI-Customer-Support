@@ -13,30 +13,41 @@ const systemPrompt = `You are an AI-powered customer support assistant at Headst
 
 Your goal is to provide accurate information, assist with common inquiries, and ensure a positive experience for all HeadStartAI users.`
 
+const generationConfig = {
+    maxOutputTokens: 300,
+    temperature: 0.9,
+    topK: 1,
+    topP: 1,
+}
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig });
+
 
 async function startChat(history) {
-    return model.startChat({
+    try {
+       return await model.startChat({
         history: history,
-        generationConfig: {
-            maxOutputTokens: 100,
-        }
-    });
+       }) 
+    } catch (error) {
+        console.error('Failed to start the conversation:', error)
+        throw new Error('Failed to start the conversation')
+    }
 }
 
 export async function POST(request) {
     const data = await request.json();
     const { userMessage, history } = data;
 
+    console.log(userMessage)
+    console.log(request)
+
     if (!userMessage || !history) {
         return NextResponse.json({ error: "userMessage and history are required" });
     }
 
     try {
-        const initialHistory = history.length === 0 
-            ? [{ role: "system", content: systemPrompt }]
-            : history;
+        const initialHistory = 
+         history.length === 0 ? [{ role: "system", content: systemPrompt }] : history;
 
         const chat = await startChat(initialHistory);
         const result = await chat.sendMessage(userMessage);
