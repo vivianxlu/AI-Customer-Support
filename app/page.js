@@ -1,95 +1,172 @@
+'use client'
 import Image from "next/image";
-import styles from "./page.module.css";
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import { useState } from 'react';
+import { Box, Button, Stack, sendMessage, TextField, Typography } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+/*
+function WebsiteTheme() {
+  const [darkMode, setDarkMode] = useState(useMediaQuery('(prefers-color-scheme: dark)'))
+
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: darkMode ? 'dark' : 'light',
+        },
+      }),
+    [darkMode],
+  );
+
+  const handleToggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  }
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ position: 'absolute', top: 10, right: 10 }}>
+        <Button onClick={handleToggleDarkMode}>
+          {darkMode ? 'Light Mode' : 'Dark Mode'}
+        </Button>
+      </Box>
+      <Home />
+    </ThemeProvider>
+  );
+}
+*/
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content: `Hi! I'm the Headstarter Support Agent, how can I assist you today?`
+    }
+  ]);
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+  const [message, setMessage] = useState('')
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
+  const sendMessage = async () => {
+    setMessages((messages) => [
+      ...messages,
+      { role: "user", content: message },
+      { role: "assistant", content: '' }
+    ]);
+
+    setMessage('')
+
+    const response = await fetch('/api/ai-customer-support', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([...messages, { role: 'user', content: message }])
+    })
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    let result = ''
+    reader.read().then(function processText({ done, value }) {
+      if (done) {
+        return result
+      }
+      const text = decoder.decode(value || new IntBArray(), { stream: true })
+      setMessages((messages) => {
+        let lastMessage = messages[messages.length - 1]
+        let otherMessages = messages.slice(0, messages.length - 1)
+        return [
+          ...otherMessages,
+          {
+            ...lastMessage,
+            content: lastMessage.content + text
+          }
+        ]
+      })
+      return reader.read().then(processText); // recursion
+    })
+  }
+  
+return (
+    <Box pwidth="100vw" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center" overflow="hidden">
+      <Stack
+        position="absolute"
+        top="50%"
+        left="50%"
+        sx={{ 
+          transform: 'translate(-50%, -50%)' 
+        }}
+        direction="column"
+        width="100%"
+        height="100%"
+        spacing={3}
+      >
+        {/* --- CHAT HEADER --- */}
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          fullWidth
+          borderBottom="3px solid black"
+          bgcolor="blue"
         >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
+          <Typography variant="h3">AI Chat Bot</Typography>
+        </Box>
+        <Stack
+          direction="column"
+          spacing={2}
+          flexGrow={1}
+          overflow="auto"
+          maxHeight="100%"
         >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
+          {
+            messages.map((message, index) => (
+              <Box key={index} display='flex' justifyContent={
+                message.role === 'assistant' ? 'flex-start' : 'flex-end'
+              }>
+                <Box
+                  bgcolor={
+                    message.role === 'assistant' ? 'primary.main' : 'secondary.main'
+                  }
+                  color="white"
+                  borderRadius={16}
+                  padding={2}
+                >
+                  {message.content}
+                </Box>
+              </Box>
+            ))}
+        </Stack>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            padding: '0px 15px 10px 15px',
+          }}
         >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+          <TextField
+            label="Enter your message..."
+            value={ message }
+            onChange = {(e) => setMessage(e.target.value)}
+            fullWidth
+            InputProps={{
+              style: {
+                borderRadius: "30px",
+              }
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={ sendMessage }
+            sx={{
+              borderRadius: "50%",
+            }}
+          ><ArrowUpwardRoundedIcon /></Button>
+        </Stack>
+      </Stack>
+    </Box>
+  )
 }
